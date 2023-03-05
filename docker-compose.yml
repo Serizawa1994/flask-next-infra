@@ -1,17 +1,6 @@
 version: '3'
 
 services:
-  nginx:
-    container_name: nginx
-    build: ./nginx
-    volumes:
-      - ./nginx/config/nginx.conf:/etc/nginx/nginx.conf
-    ports:
-      - "8080:80"
-    depends_on:
-      - server
-      - client
-
   database:
     container_name: database
     build: 
@@ -24,16 +13,16 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES-DATABASE=postgres
       - DATABASE_HOST=localhost
-      
+
   server:
     container_name: server
     build: 
       context: ./app/server
       dockerfile: Dockerfile
     ports:
-     - 5002:5000
+      - "3031:3031"
     volumes:
-      - ./app/server:/app
+      - ./app/server:/var/www/app
     depends_on:
       - database
 
@@ -43,7 +32,7 @@ services:
       context: ./app/client
       dockerfile: Dockerfile
     volumes:
-      - './app/client:/app'
+      - './app/client:/var/www/app'
       - '/app/node_modules'
     ports:
       - 3008:3000
@@ -53,3 +42,16 @@ services:
       - CHOKIDAR_USEPOLLING=true
     depends_on:
       - server
+
+  nginx:
+    container_name: nginx
+    build: ./nginx
+    restart: always
+    volumes:
+      - ./nginx/config/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - database
+      - server
+      - client
+    ports:
+      - "8080:80"
